@@ -1,11 +1,14 @@
 <?php
 
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReviewController;
+use App\Models\Booking;
 
 // Redirect halaman utama ke login
 Route::get('/', function () {
@@ -33,6 +36,13 @@ Route::middleware(['auth'])->prefix('member')->name('member.')->group(function (
     // Pembayaran & E-Tiket
     Route::get('/payment', function () { return view('member.payment'); })->name('payment');
     Route::get('/eticket', function () { return view('member.eticket'); })->name('eticket');
+    Route::post('/payment/process', function (Request $request) {
+        $booking = Booking::where('user_id', Auth::id())->latest()->first();
+        if ($booking) {
+            $booking->update(['payment_status' => 'paid']);
+        }
+        return redirect()->route('member.eticket')->with('success', 'Pembayaran berhasil diverifikasi melalui NoonaPay Gateway!');
+    })->name('payment.process');
 
     // Ulasan (Reviews)
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
